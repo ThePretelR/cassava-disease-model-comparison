@@ -140,11 +140,65 @@ Se prepararon los siguientes documentos:
 
 ---
 
+## Registro 07 — 16 de noviembre de 2026
+
+### Actividad: Depuración del dataset y creación de particiones limpias
+
+**Objetivo:** Identificar y tratar imágenes duplicadas y registros con etiquetas contradictorias para reducir el riesgo de fuga de datos durante el entrenamiento y la evaluación de los modelos.
+
+**Problema encontrado:**
+
+Durante el análisis SHA-256 del dataset Cassava se identificaron 26 grupos de imágenes duplicadas, correspondientes a 68 registros. De estos, 18 grupos presentaban etiquetas contradictorias.
+
+También se encontraron imágenes idénticas compartidas entre entrenamiento, validación y prueba, lo que podría comprometer la confiabilidad de las métricas.
+
+**Alternativas consideradas:**
+
+- Conservar las particiones originales sin modificaciones.
+- Eliminar únicamente los duplicados entre particiones.
+- Excluir los registros con etiquetas contradictorias y conservar una única aparición de cada grupo duplicado consistente.
+
+**Decisión tomada:**
+
+Se adoptó la tercera alternativa para el tratamiento de duplicados exactos.
+
+Se excluyeron todos los registros pertenecientes a grupos con etiquetas contradictorias. Para los duplicados con etiquetas consistentes se conservó una sola aparición, utilizando el orden de prioridad: prueba, validación y entrenamiento.
+
+**Prueba realizada:**
+
+Se generaron manifiestos de registros conservados y excluidos mediante Pandas. Posteriormente, se utilizaron los índices originales para construir datasets filtrados con TensorFlow.
+
+Se verificó la cantidad de elementos mediante iteración completa sobre cada partición.
+
+**Resultados obtenidos:**
+
+| Concepto | Cantidad |
+|---|---:|
+| Imágenes originales | 9.430 |
+| Registros excluidos por etiquetas contradictorias | 52 |
+| Registros excluidos por duplicados consistentes | 8 |
+| Total de registros excluidos | 60 |
+| Imágenes conservadas | 9.370 |
+
+**Distribución final:**
+
+| Partición | Antes | Después |
+|---|---:|---:|
+| Entrenamiento | 5.656 | 5.616 |
+| Validación | 1.889 | 1.879 |
+| Prueba | 1.885 | 1.875 |
+| **Total** | **9.430** | **9.370** |
+
+Durante la verificación, TensorFlow devolvió una cardinalidad desconocida (`-2`) debido al uso de `.filter()`. El conteo manual confirmó las cantidades esperadas.
+
+**Resultado:** Se construyeron las tres particiones filtradas y se verificó su cantidad de imágenes. Los datasets originales permanecieron disponibles sin modificaciones.
+
+**Estado:** Limpieza de duplicados exactos implementada. Pendiente de verificar los hashes de las particiones filtradas y revisar posibles duplicados visuales detectados mediante pHash.
+
+**Próximo paso:** Finalizar las comprobaciones de integridad, exportar evidencias y preparar el pipeline de entrenamiento de E0.
+
 ## Próximas actividades
 
-- [ ] Verificar las imágenes duplicadas y los conflictos de etiquetas.
-- [ ] Finalizar el EDA y exportar evidencias.
-- [ ] Confirmar las particiones definitivas.
 - [ ] Implementar y entrenar E0.
 - [ ] Iniciar E1 con MobileNetV2.
 - [ ] Registrar métricas y tiempos de ejecución.
