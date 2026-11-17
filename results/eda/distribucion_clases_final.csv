@@ -1,0 +1,6 @@
+clase,train,validation,test,total,porcentaje
+cbb,455,151,154,760,8.12
+cbsd,1426,479,477,2382,25.45
+cgm,762,257,253,1272,13.59
+cmd,2652,885,885,4422,47.24
+healthy,315,105,105,525,5.61
