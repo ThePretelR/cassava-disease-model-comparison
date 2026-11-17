@@ -197,6 +197,68 @@ Durante la verificación, TensorFlow devolvió una cardinalidad desconocida (`-2
 
 **Próximo paso:** Finalizar las comprobaciones de integridad, exportar evidencias y preparar el pipeline de entrenamiento de E0.
 
+## Registro 08 — 17 de noviembre de 2026
+
+### Actividad: Limpieza perceptual y cierre del análisis exploratorio de datos
+
+**Objetivo:** Completar la depuración del dataset Cassava mediante hashes perceptuales (pHash), verificar la distribución final de clases y establecer las particiones definitivas para los experimentos.
+
+**Problema identificado:**
+
+Después de la limpieza por SHA-256 permanecían siete grupos de imágenes con pHash repetido, correspondientes a 14 registros. Cuatro grupos incluían imágenes de distintas particiones y dos presentaban etiquetas diferentes.
+
+**Pruebas realizadas:**
+
+1. Se analizaron los pHash de las 9.370 imágenes conservadas después de la primera limpieza.
+2. Se visualizaron los siete pares sospechosos y se confirmó que eran visualmente iguales.
+3. Se excluyeron cuatro registros pertenecientes a grupos con etiquetas contradictorias.
+4. Se excluyeron cinco registros duplicados con etiquetas consistentes, conservando una aparición según la prioridad prueba, validación y entrenamiento.
+5. Se generaron los manifiestos finales y los datasets definitivos en TensorFlow.
+6. Se verificaron las cantidades de las tres particiones y la distribución de las cinco clases.
+
+**Resultados de la depuración:**
+
+| Concepto | Cantidad |
+|---|---:|
+| Imágenes originales | 9.430 |
+| Exclusiones por SHA-256 | 60 |
+| Exclusiones adicionales por pHash | 9 |
+| Total de exclusiones | 69 |
+| Imágenes finales | 9.361 |
+
+**Particiones definitivas:**
+
+| Partición | Imágenes |
+|---|---:|
+| Entrenamiento | 5.610 |
+| Validación | 1.877 |
+| Prueba | 1.874 |
+| Total | 9.361 |
+
+**Distribución final por clase:**
+
+| Clase | Total | Porcentaje |
+|---|---:|---:|
+| cbb | 760 | 8,12 % |
+| cbsd | 2.382 | 25,45 % |
+| cgm | 1.272 | 13,59 % |
+| cmd | 4.422 | 47,24 % |
+| healthy | 525 | 5,61 % |
+
+**Interpretación:**
+
+El dataset presenta un desequilibrio significativo. La clase `cmd` representa aproximadamente el 47 % de las imágenes, mientras que `healthy` representa cerca del 6 %.
+
+Por esta razón, se utilizará macro-F1 como métrica principal para comparar los modelos, complementada con accuracy, recall y F1 por clase y matrices de confusión.
+
+**Decisión metodológica:**
+
+Todos los experimentos utilizarán las mismas particiones depuradas. La limpieza se realizó antes del entrenamiento para reducir el riesgo de fuga de información y mejorar la consistencia de la evaluación.
+
+**Resultado:** Se completó el análisis exploratorio, se construyeron los datasets definitivos y se verificó su distribución.
+
+**Próximo paso:** Preparar el preprocesamiento común e implementar el experimento E0, una CNN entrenada desde cero.
+
 ## Próximas actividades
 
 - [ ] Implementar y entrenar E0.
