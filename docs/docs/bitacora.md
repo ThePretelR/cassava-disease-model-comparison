@@ -259,9 +259,84 @@ Todos los experimentos utilizarán las mismas particiones depuradas. La limpieza
 
 **Próximo paso:** Preparar el preprocesamiento común e implementar el experimento E0, una CNN entrenada desde cero.
 
+## Bitácora de desarrollo — Experimento E0
+
+**Fecha:** 17 de noviembre de 2026  
+**Proyecto:** Comparación experimental de modelos preentrenados para reconocer enfermedades de la yuca mediante fotografías de hojas.  
+**Experimento:** E0 — CNN entrenada desde cero.
+
+### 1. Objetivo de la actividad
+
+Implementar, entrenar y evaluar una red neuronal convolucional (CNN) desde cero, estableciendo un modelo base para comparar posteriormente el rendimiento de MobileNetV2 y ResNet50.
+
+### 2. Actividades realizadas
+
+1. Se reconstruyeron las particiones definitivas del dataset Cassava, utilizando el manifiesto de imágenes conservadas después del proceso de limpieza.
+2. Se verificó la integridad de las 9.361 imágenes mediante hashes SHA-256.
+3. Se configuró el preprocesamiento con imágenes de 224 × 224 píxeles y normalización al intervalo [0, 1].
+4. Se implementó una CNN con tres capas convolucionales, operaciones de MaxPooling, GlobalAveragePooling, una capa densa, Dropout y una salida Softmax de cinco clases.
+5. Se configuró el entrenamiento con el optimizador Adam, función de pérdida Sparse Categorical Crossentropy, EarlyStopping y ModelCheckpoint.
+6. Se presentaron problemas de ejecución relacionados con el consumo de memoria y el agotamiento de datos durante el entrenamiento.
+7. Se optimizó la preparación del dataset utilizando un búfer de mezcla de 512 imágenes, procesamiento paralelo limitado, prefetch de un lote y batch size de 8.
+8. Se completó el entrenamiento de 15 épocas y se evaluó el modelo utilizando el conjunto de validación.
+9. Se generaron las métricas de clasificación, la matriz de confusión y las curvas de aprendizaje.
+10. Se organizaron y subieron a GitHub el notebook, los archivos CSV y las gráficas del experimento.
+
+### 3. Configuración experimental
+
+| Parámetro | Valor |
+|---|---|
+| Modelo | CNN E0 |
+| Parámetros entrenables | 110.405 |
+| Imágenes de entrenamiento | 5.610 |
+| Imágenes de validación | 1.877 |
+| Imágenes de prueba reservadas | 1.874 |
+| Resolución | 224 × 224 |
+| Batch size | 8 |
+| Épocas | 15 |
+| Optimizador | Adam |
+| Learning rate | 0,001 |
+| Semilla | 42 |
+
+### 4. Resultados obtenidos
+
+| Métrica | Resultado |
+|---|---|
+| Accuracy de validación | 67,87 % |
+| Macro-F1 | 0,4699 |
+| Loss de validación | 0,8850 |
+| Tiempo de entrenamiento | 495,67 segundos |
+| Épocas completadas | 15 |
+
+El modelo presentó un mejor reconocimiento de las clases CMD y CBSD, con F1-score de aproximadamente 0,82 y 0,70, respectivamente. Las clases CBB y CGM obtuvieron los resultados más bajos, con F1-score cercanos a 0,18 y 0,19.
+
+La matriz de confusión evidenció 88 imágenes CBB clasificadas como CBSD y 155 imágenes CGM clasificadas como CMD.
+
+### 5. Dificultades y soluciones
+
+**Dificultad 1:** El entrenamiento se interrumpía antes de completar las épocas previstas.
+
+**Solución:** Se modificó la canalización de datos para reducir el consumo de memoria y se configuró la repetición controlada del dataset durante el entrenamiento.
+
+**Dificultad 2:** Se identificó un aumento progresivo en el uso de RAM.
+
+**Solución:** Se redujo el tamaño del lote a 8, se limitó el búfer de mezcla a 512 y se agregó un callback para monitorear el consumo de memoria.
+
+**Dificultad 3:** Se detectó un rendimiento desigual entre las clases.
+
+**Análisis:** El modelo reconoce mejor las clases con mayor representación, aunque también pueden influir las similitudes visuales y la capacidad de la arquitectura.
+
+### 6. Conclusiones
+
+El experimento E0 se completó y permitió establecer una línea base reproducible para la comparación de modelos. Las curvas de aprendizaje mostraron una mejora progresiva durante las 15 épocas, sin señales claras de sobreajuste.
+
+La diferencia entre accuracy y Macro-F1 evidencia la importancia de evaluar el rendimiento equilibrado entre clases, especialmente ante el desbalance del conjunto de datos.
+
+### 7. Próximas actividades
+
+Implementar el experimento E1 utilizando MobileNetV2 preentrenada con
+
 ## Próximas actividades
 
-- [ ] Implementar y entrenar E0.
-- [ ] Iniciar E1 con MobileNetV2.
 - [ ] Registrar métricas y tiempos de ejecución.
 - [ ] Preparar evidencias para la revisión intermedia.
