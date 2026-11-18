@@ -1,0 +1,2 @@
+modelo,accuracy,macro_f1,tiempo_entrenamiento_segundos,epocas_ejecutadas
+E0_CNN,0.678742674480554,0.4699171858840643,495.674839109,15
