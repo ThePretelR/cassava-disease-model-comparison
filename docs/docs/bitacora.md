@@ -336,6 +336,61 @@ La diferencia entre accuracy y Macro-F1 evidencia la importancia de evaluar el r
 
 Implementar el experimento E1 utilizando MobileNetV2 preentrenada con
 
+## 18 de noviembre de 2026 — Ejecución parcial del experimento E1
+
+**Experimento:** E1 — MobileNetV2 preentrenada con ImageNet y base convolucional congelada.
+
+### Objetivo
+
+Implementar y ejecutar parcialmente un modelo de transferencia de aprendizaje para evaluar su rendimiento inicial frente a la CNN entrenada desde cero (E0).
+
+### Actividades realizadas
+
+1. Se reconstruyeron las particiones definitivas del dataset Cassava, conservando 5.610 imágenes de entrenamiento, 1.877 de validación y 1.874 de prueba.
+2. Se configuró MobileNetV2 con pesos preentrenados de ImageNet y se congelaron todas las capas de su base convolucional.
+3. Se implementó una cabeza de clasificación con GlobalAveragePooling2D, una capa densa de 128 neuronas, Dropout y una salida Softmax de cinco clases.
+4. Se aplicó el preprocesamiento específico de MobileNetV2, transformando los valores de los píxeles al intervalo [-1, 1].
+5. Se optimizó el procesamiento de datos para limitar el consumo de RAM utilizando lotes de ocho imágenes, un búfer de mezcla de 512 y prefetch de un lote.
+6. Se ejecutaron tres épocas de entrenamiento en Google Colab con GPU.
+7. Se calcularon las métricas preliminares sobre el conjunto de validación y se generaron los archivos de resultados y visualizaciones.
+
+### Configuración
+
+| Parámetro | Valor |
+|---|---|
+| Arquitectura | MobileNetV2 |
+| Parámetros totales | 2.422.597 |
+| Parámetros entrenables | 164.613 |
+| Parámetros congelados | 2.257.984 |
+| Resolución | 224 × 224 |
+| Batch size | 8 |
+| Épocas ejecutadas | 3 |
+| TensorFlow | 2.21.0 |
+
+### Resultados preliminares
+
+| Métrica | Resultado |
+|---|---|
+| Accuracy de validación | 76,45 % |
+| Macro-F1 | 0,6777 |
+| Pérdida de validación | 0,6520 |
+| Tiempo de entrenamiento | 174,13 segundos |
+| Tiempo de inferencia | 5,35 ms/imagen |
+
+El Macro-F1 de E1 fue superior al de E0 (0,4699), con una diferencia de 0,2078. La mejora fue especialmente notable en la clasificación de CGM.
+
+### Consumo de memoria
+
+Durante el entrenamiento, la RAM utilizada aumentó del 21,7 % al finalizar la primera época al 28,3 % al finalizar la tercera. El proceso terminó con aproximadamente 9,09 GB disponibles, sin interrupciones por falta de memoria.
+
+### Conclusión
+
+La ejecución parcial permitió verificar que MobileNetV2 funciona correctamente con la base congelada y presenta resultados preliminares prometedores. La comparación todavía no es definitiva, ya que E0 se entrenó durante 15 épocas y E1 solamente durante tres.
+
+### Próximos pasos
+
+Completar el entrenamiento de E1, analizar su rendimiento final y continuar con E2, correspondiente al ajuste fino parcial de MobileNetV2.
+
 ## Próximas actividades
 
 - [ ] Registrar métricas y tiempos de ejecución.
