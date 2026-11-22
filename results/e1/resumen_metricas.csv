@@ -1,0 +1,2 @@
+modelo,accuracy,macro_f1,tiempo_entrenamiento_segundos,epocas_ejecutadas,segundos_por_epoca,ms_inferencia_por_imagen,tamano_modelo_MB,parametros_entrenables,parametros_totales,batch_size,resolucion,learning_rate,semilla
+E1_MobileNetV2_congelada,0.7645178476291955,0.6777475742367502,286.504443499,7,40.92920621414286,5.485784411827359,11.066140174865723,164613,2422597,8,224x224,0.001,42
