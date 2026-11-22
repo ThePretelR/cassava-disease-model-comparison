@@ -391,7 +391,142 @@ La ejecución parcial permitió verificar que MobileNetV2 funciona correctamente
 
 Completar el entrenamiento de E1, analizar su rendimiento final y continuar con E2, correspondiente al ajuste fino parcial de MobileNetV2.
 
+## Bitácora de desarrollo — Experimento E1 (finalización)
+
+**Experimento:** E1 — MobileNetV2 preentrenada con ImageNet y base convolucional congelada.
+
+### Objetivo
+
+Completar el entrenamiento de E1 con el máximo de 15 épocas definido en el protocolo, para que la comparación con E0 y con los demás experimentos sea equitativa, y obtener el modelo final que sirve de punto de partida para E2.
+
+### Problema identificado
+
+La ejecución parcial anterior se realizó con `EPOCHS = 3`, aunque el protocolo establece un máximo de 15 épocas. La pérdida de validación seguía disminuyendo en la tercera época (0,750 → 0,705 → 0,652), por lo que el entrenamiento no podía considerarse concluido.
+
+### Actividades realizadas
+
+1. Se modificó el parámetro `EPOCHS` de 3 a 15 y se volvió a ejecutar el notebook completo desde una sesión nueva en Google Colab con GPU T4.
+2. Se mantuvieron sin cambios el resto de la configuración: batch size 8, learning rate 0,001, semilla 42, `EarlyStopping` con paciencia 4 sobre `val_loss` y sin aumento de datos.
+3. Se evaluó el mejor modelo sobre el conjunto de validación y se regeneraron los archivos de `results/e1/` (historial, reporte de clasificación, matriz de confusión, curvas, comparación con E0 y errores inspeccionados).
+
+### Resultados
+
+| Concepto | Resultado |
+|---|---|
+| Épocas ejecutadas | 7 de 15 |
+| Mejor época (menor `val_loss`) | 3 |
+| Motivo de la detención | `EarlyStopping`: la pérdida de validación no mejoró durante las cuatro épocas siguientes a la época 3 |
+| Accuracy de validación (mejor modelo) | 76,45 % |
+| Macro-F1 (mejor modelo) | 0,6777 |
+| Tiempo de entrenamiento (7 épocas) | [completar desde `resumen_metricas.csv`] |
+| Tiempo de inferencia | [completar desde `resumen_metricas.csv`] ms/imagen |
+
+El mejor modelo corresponde a la época 3, porque `EarlyStopping` restauró los pesos con menor `val_loss`. Por eso las métricas finales coinciden con las de la ejecución parcial anterior (Macro-F1 0,6777 y accuracy 0,7645).
+
+### Interpretación
+
+La ejecución de 15 épocas confirmó que más entrenamiento no mejoraba la pérdida de validación con esta configuración: el valor mínimo se alcanzó en la época 3. La ejecución parcial anterior ya estaba cerca del óptimo, y los resultados de E1 son ahora definitivos para el protocolo.
+
+La comparación con E0 se mantiene: Macro-F1 de 0,6777 frente a 0,4699, es decir, una mejora de 0,2078 con el modelo preentrenado. Al igual que en la ejecución parcial, la mejora más notable se observa en las clases pequeñas (CGM y CBB).
+
+### Resultado
+
+E1 quedó completo y su modelo final (`mejor_modelo_e1.keras`) se utilizó como punto de partida del experimento E2.
+
+### Próximo paso
+
+Ejecutar E2 (ajuste fino parcial de MobileNetV2) a partir del mejor modelo de E1.
+
+## Bitácora de desarrollo — Experimento E2
+
+**Experimento:** E2 — MobileNetV2 con ajuste fino (fine-tuning) parcial.
+
+### Objetivo
+
+Evaluar si descongelar las últimas capas del backbone de MobileNetV2 mejora el desempeño de E1 (comparación secundaria E1 frente a E2, hipótesis H3).
+
+### Actividades realizadas
+
+1. Se reconstruyeron las particiones definitivas con el manifiesto de imágenes conservadas: 5.610 de entrenamiento, 1.877 de validación y 1.874 de prueba (reservadas, no utilizadas).
+2. Se cargó el mejor modelo de E1 y se volvió a evaluar en validación dentro del mismo notebook, para comparar ambos experimentos con el mismo código de métricas. El Macro-F1 recalculado de E1 fue 0,6777, idéntico al registrado.
+3. Se descongelaron las últimas 20 capas del backbone, manteniendo congeladas las capas BatchNormalization (7 de las 20). El resto del backbone y todas las capas anteriores permanecieron congelados.
+4. Se recompiló el modelo con Adam y learning rate 1e-5, y se entrenó un máximo de 10 épocas con `EarlyStopping` (paciencia 4) sobre `val_loss` y `ModelCheckpoint`.
+5. Se evaluó el mejor checkpoint en validación y se generaron las métricas, la matriz de confusión, las curvas de aprendizaje, la comparación E1 frente a E2 (global y por clase) y la inspección de ocho errores.
+
+### Configuración
+
+| Parámetro | Valor |
+|---|---|
+| Punto de partida | `mejor_modelo_e1.keras` (mejor época de E1) |
+| Capas descongeladas | Últimas 20 del backbone (13 entrenables y 7 BatchNorm congeladas) |
+| Parámetros totales | 2.422.597 |
+| Parámetros entrenables | 1.359.493 (en E1: 164.613) |
+| Learning rate | 1e-5 |
+| Optimizador | Adam |
+| Batch size | 8 |
+| Épocas máximas | 10 |
+| Semilla | 42 |
+| Preprocesamiento | Igual que E1 (normalización a [-1, 1] dentro del modelo) |
+
+### Resultados (validación)
+
+| Métrica | E1 | E2 | Diferencia |
+|---|---:|---:|---:|
+| Accuracy | 0,7645 | 0,7954 | +0,0309 |
+| Macro-F1 | 0,6777 | 0,7182 | +0,0405 |
+
+| Clase | F1 en E1 | F1 en E2 | Diferencia |
+|---|---:|---:|---:|
+| cbb | 0,4833 | 0,5296 | +0,0463 |
+| cbsd | 0,7273 | 0,7654 | +0,0381 |
+| cgm | 0,6808 | 0,7113 | +0,0305 |
+| cmd | 0,8605 | 0,8800 | +0,0195 |
+| healthy | 0,6369 | 0,7048 | +0,0679 |
+
+| Concepto | Resultado |
+|---|---|
+| Épocas ejecutadas | 7 de 10 |
+| Mejor época (menor `val_loss`) | 3 (`val_loss` = 0,5754) |
+| Motivo de la detención | `EarlyStopping` |
+| Tiempo de entrenamiento | 228,55 segundos |
+| Tiempo de inferencia | 5,04 ms/imagen |
+
+### Interpretación
+
+El ajuste fino mejoró el Macro-F1 en 0,0405 y el F1 de las cinco clases. Los mayores aumentos se dieron en `healthy` (+0,068) y `cbb` (+0,046), las clases con menos imágenes. CBB sigue siendo la clase más débil (recall de 0,44).
+
+En las curvas se observa que la accuracy de entrenamiento llega a 0,90 en la época 7, mientras que la de validación se mantiene cerca de 0,79. La pérdida de validación alcanza su mínimo en la época 3 y luego sube, lo que indica el inicio de sobreajuste, y es lo que detuvo el entrenamiento.
+
+Con estos resultados, la hipótesis H3 (E2 supera a E1) queda respaldada en esta ejecución.
+
+### Observaciones y limitaciones
+
+- Se trata de una sola ejecución con semilla 42 y evaluada solo en validación. Las diferencias por clase, en especial en las clases con pocas imágenes (CBB: 151 y healthy: 105), pueden deberse al azar.
+- **Tiempo de inferencia:** E1 midió 10,46 ms/imagen y E2 5,04 ms/imagen. Ambos modelos tienen la misma arquitectura y el mismo número total de parámetros, por lo que la diferencia no corresponde a una mejora real. La medición de E1 se realizó primero en la sesión, con el modelo recién cargado. El costo de inferencia de ambos es de aproximadamente 5 ms/imagen.
+- **Tamaño del modelo:** el archivo de E1 pesa 11,07 MB y el de E2, 20,18 MB. La diferencia se debe al estado del optimizador Adam que Keras guarda en el archivo `.keras` (E2 tiene más parámetros entrenables), no a un cambio de arquitectura. Para comparar con E3 conviene medir el tamaño de los modelos guardados sin optimizador.
+- Se mantuvieron las diferencias de E1 frente al protocolo: batch size 8 (el protocolo indica 32), capa densa de 128 neuronas (el protocolo indica 64) y Dropout de 0,3.
+- No se utilizó el conjunto de prueba.
+
+### Archivos generados
+
+`results/e2/`: `historial_entrenamiento.csv`, `reporte_clasificacion.csv`, `matriz_confusion.csv`, `matriz_confusion.png`, `curvas_entrenamiento.png`, `resumen_metricas.csv`, `comparacion_e1_e2.csv`, `comparacion_f1_por_clase_e1_e2.csv`, `errores_inspeccionados.csv`, `errores_inspeccionados.png` y `mejor_modelo_e2.keras`.
+
+Notebook: `notebooks/04_entrenamiento_E2.ipynb`.
+
+### Próximos pasos
+
+- Ejecutar E3 (ResNet50 con backbone congelado), la comparación principal frente a E1.
+- Redactar el análisis de los ocho errores inspeccionados.
+- Evaluar los modelos en el conjunto de prueba al finalizar todos los experimentos.
+- Realizar la prueba de robustez con brillo ×0,8.
+
 ## Próximas actividades
 
+- [x] Completar el entrenamiento de E1 (15 épocas máximo).
+- [x] Ejecutar E2 (fine-tuning parcial de MobileNetV2).
+- [ ] Ejecutar E3 (ResNet50 congelada).
 - [ ] Registrar métricas y tiempos de ejecución.
+- [ ] Analizar al menos ocho errores reales.
+- [ ] Prueba de robustez con brillo ×0,8.
+- [ ] Evaluación final en el conjunto de prueba.
 - [ ] Preparar evidencias para la revisión intermedia.
