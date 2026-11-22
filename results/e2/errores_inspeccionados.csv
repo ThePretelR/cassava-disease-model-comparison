@@ -1,0 +1,9 @@
+indice_validacion,clase_real,clase_predicha,confianza
+1139,cgm,cmd,0.9966074
+1607,cbsd,cmd,0.9957373
+571,cbsd,cmd,0.9940916
+1117,cbb,cgm,0.9933615
+839,healthy,cmd,0.51323026
+134,cbb,cbsd,0.7661106
+1188,cbb,healthy,0.52328014
+1417,cbsd,cbb,0.33239925

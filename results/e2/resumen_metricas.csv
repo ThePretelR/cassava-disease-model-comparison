@@ -1,0 +1,2 @@
+modelo,accuracy,macro_f1,tiempo_entrenamiento_segundos,epocas_ejecutadas,mejor_epoca,segundos_por_epoca,ms_inferencia_por_imagen,tamano_modelo_MB,parametros_entrenables,parametros_totales,capas_descongeladas,batch_size,resolucion,learning_rate,semilla
+E2_MobileNetV2_finetuning,0.795418220564731,0.7182183777575065,228.55275893099997,7,3,32.650394133,5.035524623867827,20.181703567504883,1359493,2422597,20,8,224x224,1e-05,42
