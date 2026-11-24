@@ -513,20 +513,68 @@ Con estos resultados, la hipótesis H3 (E2 supera a E1) queda respaldada en esta
 
 Notebook: `notebooks/04_entrenamiento_E2.ipynb`.
 
-### Próximos pasos
+## 23/11/2026 – Preparación del experimento E3: ResNet50 congelada
 
-- Ejecutar E3 (ResNet50 con backbone congelado), la comparación principal frente a E1.
-- Redactar el análisis de los ocho errores inspeccionados.
-- Evaluar los modelos en el conjunto de prueba al finalizar todos los experimentos.
-- Realizar la prueba de robustez con brillo ×0,8.
+### Objetivo
 
-## Próximas actividades
+Comparar el desempeño y el costo computacional de ResNet50 frente a MobileNetV2 (E1), manteniendo condiciones experimentales comparables.
 
-- [x] Completar el entrenamiento de E1 (15 épocas máximo).
-- [x] Ejecutar E2 (fine-tuning parcial de MobileNetV2).
-- [ ] Ejecutar E3 (ResNet50 congelada).
-- [ ] Registrar métricas y tiempos de ejecución.
-- [ ] Analizar al menos ocho errores reales.
-- [ ] Prueba de robustez con brillo ×0,8.
-- [ ] Evaluación final en el conjunto de prueba.
-- [ ] Preparar evidencias para la revisión intermedia.
+### Problema identificado
+
+Aunque se completaron los experimentos E0, E1 y E2, todavía falta comparar dos arquitecturas preentrenadas diferentes bajo el mismo régimen de extracción de características.
+
+### Alternativas consideradas
+
+- ResNet18: arquitectura residual con menor complejidad computacional.
+- ResNet50: arquitectura residual de mayor profundidad, disponible directamente en TensorFlow/Keras.
+
+### Decisión
+
+Se seleccionó ResNet50 con pesos preentrenados en ImageNet, debido a su disponibilidad en Keras y su capacidad de extracción de características. Se mantendrá congelada la base convolucional y se entrenará únicamente la cabeza clasificadora, conservando las condiciones experimentales de E1 y utilizando un máximo de 7 épocas.
+
+### Hipótesis previas
+
+- **H1 – Desempeño:** se espera que ResNet50 obtenga un Macro-F1 superior al 0.6777 alcanzado por MobileNetV2 en E1, debido a su mayor profundidad y capacidad de representación de características visuales.
+- **H2 – Clasificación por clase:** se espera una mejora en la clasificación de las categorías minoritarias, especialmente CBB y Healthy, mediante la extracción de características visuales más complejas. Sin embargo, el desbalance del dataset podría limitar esta mejora.
+- **H3 – Costo computacional:** se espera que ResNet50 presente mayores tiempos de entrenamiento e inferencia, mayor consumo de memoria y mayor tamaño del modelo que MobileNetV2, debido a su mayor cantidad de parámetros.
+
+### Configuración experimental
+
+| Parámetro | Valor |
+|---|---|
+| Arquitectura | ResNet50 |
+| Pesos iniciales | ImageNet |
+| Backbone | Congelado |
+| Semilla | 42 |
+| Resolución | 224 × 224 |
+| Batch size | 8 |
+| Épocas máximas | 7 |
+| Learning rate | 0.001 |
+| Optimizador | Adam |
+| Capa densa | 128 neuronas |
+| Dropout | 0.3 |
+| EarlyStopping | Paciencia de 4 épocas |
+| Augmentation | No |
+| Imágenes de entrenamiento | 5610 |
+| Imágenes de validación | 1877 |
+| Imágenes de prueba reservadas | 1874 |
+| Métrica principal | Macro-F1 |
+
+### Prueba planificada
+
+- Entrenar ResNet50 utilizando las mismas particiones depuradas de los experimentos anteriores.
+- Aplicar el preprocesamiento específico de ResNet50.
+- Monitorear el consumo de memoria RAM.
+- Calcular accuracy, Macro-F1, recall y F1 por clase.
+- Generar la matriz de confusión y las curvas de aprendizaje.
+- Registrar los tiempos de entrenamiento e inferencia y el tamaño del modelo.
+- Inspeccionar ocho errores de clasificación.
+- Comparar los resultados de E3 frente a E1.
+
+### Resultado
+
+Pendiente de ejecución.
+
+### Revisión de la decisión
+
+Después del entrenamiento se contrastarán los resultados obtenidos con las hipótesis planteadas, determinando si la mayor complejidad de ResNet50 se traduce en una mejora del desempeño que justifique su costo computacional.
