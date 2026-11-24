@@ -573,7 +573,32 @@ Se seleccionó ResNet50 con pesos preentrenados en ImageNet, debido a su disponi
 
 ### Resultado
 
-Pendiente de ejecución.
+El experimento E3 se ejecutó correctamente durante 7 épocas, utilizando ResNet50 con la base convolucional congelada y las mismas particiones depuradas de los experimentos anteriores.
+
+Resultados obtenidos:
+
+- Accuracy: 0.7896.
+- Macro-F1: 0.7152.
+- Tiempo de entrenamiento: 294.63 segundos.
+- Tiempo de inferencia: 6.26 ms por imagen.
+- Parámetros totales: 23,850,641.
+- Parámetros entrenables: 262,917.
+- Mejor pérdida de validación: 0.6153, en la cuarta época.
+- Consumo máximo de RAM registrado al finalizar una época: 41 %.
+
+### Contrastación de hipótesis
+
+**H1 – Desempeño:** respaldada. ResNet50 obtuvo un Macro-F1 de 0.7152, superior al 0.6777 de MobileNetV2 en E1.
+
+**H2 – Clasificación por clase:** respaldada. El F1 de CBB aumentó de 0.48 a 0.55 y el de Healthy aumentó de 0.64 a 0.71.
+
+**H3 – Costo computacional:** parcialmente respaldada. ResNet50 presentó mayores tiempos de entrenamiento e inferencia y una cantidad considerablemente mayor de parámetros. Queda pendiente verificar el tamaño definitivo del archivo y comparar el consumo de memoria bajo condiciones equivalentes.
+
+### Revisión de la decisión
+
+ResNet50 mejoró el desempeño frente a MobileNetV2 congelada, aunque presenta un mayor costo computacional. Las curvas de aprendizaje muestran indicios de sobreajuste después de la cuarta época.
+
+Se considera válida la ejecución de E3 y no se realizarán modificaciones adicionales de hiperparámetros. La comparación definitiva se realizará utilizando el conjunto de prueba reservado.
 
 ### Revisión de la decisión
 
