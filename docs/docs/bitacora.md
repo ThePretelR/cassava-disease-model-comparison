@@ -603,3 +603,101 @@ Se considera válida la ejecución de E3 y no se realizarán modificaciones adic
 ### Revisión de la decisión
 
 Después del entrenamiento se contrastarán los resultados obtenidos con las hipótesis planteadas, determinando si la mayor complejidad de ResNet50 se traduce en una mejora del desempeño que justifique su costo computacional.
+
+## Evaluación final de los modelos E0, E1, E2 y E3
+
+**Fecha:** 24/11/2026
+
+### Problema
+
+Los cuatro experimentos principales habían finalizado, pero las métricas obtenidas correspondían al conjunto de validación. Era necesario evaluar la capacidad de generalización de los modelos sobre imágenes que no participaron en el entrenamiento ni en la selección de hiperparámetros.
+
+### Alternativas consideradas
+
+- Utilizar las métricas de validación como resultados definitivos.
+- Evaluar cada modelo de manera independiente en diferentes sesiones.
+- Evaluar los cuatro modelos en un mismo notebook, utilizando el mismo conjunto de prueba y condiciones de ejecución.
+
+### Decisión
+
+Se seleccionó la tercera alternativa para garantizar una comparación experimental bajo condiciones equivalentes.
+
+Se creó el notebook `06_evaluacion_final.ipynb`, utilizando los mejores checkpoints obtenidos durante los experimentos E0, E1, E2 y E3, sin realizar entrenamientos adicionales ni modificar los hiperparámetros.
+
+Se mantuvo Macro-F1 como métrica principal debido al desbalance existente entre las cinco clases del dataset.
+
+### Prueba realizada
+
+Se evaluaron los cuatro modelos sobre las 1.874 imágenes del conjunto de prueba definitivo, manteniendo una resolución de 224 × 224 píxeles, un tamaño de lote de 8 y una semilla de 42.
+
+Se respetó el preprocesamiento correspondiente a cada arquitectura. Para E0 se aplicó la normalización entre 0 y 1, mientras que E1, E2 y E3 utilizaron el preprocesamiento incorporado en sus respectivas arquitecturas.
+
+Durante la ejecución se presentó un inconveniente en la carga de los checkpoints, debido a que Google Colab renombró un archivo duplicado. Se solucionó modificando el notebook para utilizar directamente los archivos almacenados en `/content/`, evitando cargas innecesarias.
+
+### Resultados obtenidos
+
+| Modelo | Accuracy | Macro-F1 | Entrenamiento (s) | Inferencia (ms/imagen) | Pesos (MiB) |
+|---|---:|---:|---:|---:|---:|
+| E0 | 0.6772 | 0.4566 | 495.67 | 4.82 | 0.42 |
+| E1 | 0.7620 | 0.6600 | 286.50 | 10.09 | 9.24 |
+| E2 | 0.8122 | 0.7403 | 228.55 | 5.48 | 9.24 |
+| E3 | 0.8068 | 0.7273 | 294.63 | 11.11 | 90.98 |
+
+El tiempo de entrenamiento de E2 corresponde únicamente a la etapa de fine-tuning. Su tiempo acumulado, incluyendo el entrenamiento previo de E1, fue de 515.06 segundos.
+
+### Análisis de resultados
+
+**Comparación E1 frente a E0: efecto del aprendizaje por transferencia**
+
+MobileNetV2 congelada obtuvo una mejora de 20.34 puntos porcentuales en Macro-F1 y 8.48 puntos porcentuales en accuracy respecto a la CNN baseline.
+
+Estos resultados respaldan la hipótesis de que utilizar características previamente aprendidas mediante ImageNet puede mejorar el reconocimiento de enfermedades de la yuca frente a una arquitectura entrenada desde cero.
+
+**Comparación E2 frente a E1: efecto del fine-tuning**
+
+El ajuste fino de MobileNetV2 produjo una mejora de 8.03 puntos porcentuales en Macro-F1 y 5.02 puntos porcentuales en accuracy.
+
+Esto respalda la hipótesis de que adaptar parcialmente las características preentrenadas al dominio específico de las enfermedades de la yuca mejora el rendimiento de clasificación.
+
+**Comparación E3 frente a E1: efecto de la arquitectura preentrenada**
+
+ResNet50 superó a MobileNetV2 congelada en 6.73 puntos porcentuales de Macro-F1 y 4.48 puntos porcentuales de accuracy.
+
+Sin embargo, ResNet50 posee aproximadamente 9.85 veces más parámetros y requiere un mayor espacio de almacenamiento para sus pesos. Por tanto, la mejora predictiva implica un mayor costo en recursos.
+
+**Comparación E2 frente a E3**
+
+E2 obtuvo el mejor rendimiento general, alcanzando un accuracy del 81.22 % y un Macro-F1 del 74.03 %.
+
+Aunque E3 obtuvo resultados cercanos, E2 presentó un Macro-F1 superior en aproximadamente 1.30 puntos porcentuales, utilizando considerablemente menos parámetros y almacenamiento.
+
+No obstante, esta diferencia no permite afirmar una superioridad estadísticamente significativa, debido a que los experimentos se realizaron con una única semilla y no se efectuaron pruebas de significancia estadística.
+
+### Revisión del costo computacional
+
+E0 presentó el menor tamaño de pesos y el menor tiempo de inferencia observado, aunque obtuvo el rendimiento predictivo más bajo.
+
+E2 presentó el mejor equilibrio observado entre capacidad predictiva, tamaño del modelo y velocidad de inferencia.
+
+Los modelos E1 y E2 poseen la misma cantidad de parámetros totales (2.422.597) y el mismo tamaño de pesos (9.24 MiB). El mayor tamaño del checkpoint de E2 no representa un aumento de la arquitectura y puede estar relacionado con el almacenamiento del estado del optimizador durante el ajuste fino.
+
+Las diferencias en los tiempos de inferencia entre E1 y E2 deben interpretarse con precaución, considerando que ambos utilizan la misma arquitectura y que las mediciones pueden verse afectadas por las condiciones de ejecución de Google Colab.
+
+### Revisión y decisión posterior
+
+Los resultados obtenidos permiten identificar a E2 como el modelo con mejor rendimiento predictivo observado y mejor equilibrio general entre precisión y recursos computacionales.
+
+Se decidió conservar los cuatro modelos sin realizar modificaciones adicionales, evitando utilizar los resultados del conjunto de prueba para ajustar hiperparámetros.
+
+Como siguiente actividad, se realizará el experimento controlado de robustez mediante una reducción del brillo del 20 % sobre una copia del conjunto de prueba, manteniendo constantes los pesos, las etiquetas y las demás condiciones experimentales.
+
+### Evidencias generadas
+
+- Notebook `06_evaluacion_final.ipynb`.
+- Tabla consolidada de resultados.
+- Métricas individuales por clase.
+- Matrices de confusión.
+- Predicciones de los cuatro modelos.
+- Gráficas comparativas de rendimiento.
+- Mediciones de tiempo de inferencia y tamaño de los modelos.
+- Registro del entorno de ejecución.
