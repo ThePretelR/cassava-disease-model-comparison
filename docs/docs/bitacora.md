@@ -701,3 +701,141 @@ Como siguiente actividad, se realizará el experimento controlado de robustez me
 - Gráficas comparativas de rendimiento.
 - Mediciones de tiempo de inferencia y tamaño de los modelos.
 - Registro del entorno de ejecución.
+## Experimento adicional: robustez ante variaciones de iluminación
+
+**Fecha:** 24/11/2026
+
+### Problema
+
+Las fotografías de hojas de yuca capturadas en condiciones reales pueden presentar variaciones de iluminación que afecten la capacidad de los modelos para reconocer los síntomas de las enfermedades.
+
+Por esta razón, fue necesario evaluar la estabilidad de los cuatro modelos ante una modificación controlada del brillo de las imágenes.
+
+### Alternativas consideradas
+
+- Aplicar técnicas de aumento de datos durante el entrenamiento.
+- Evaluar los modelos ante diferentes niveles de ruido.
+- Reducir el brillo de las imágenes del conjunto de prueba sin modificar los modelos entrenados.
+
+### Decisión
+
+Se seleccionó la tercera alternativa, conforme al protocolo experimental establecido previamente.
+
+Se aplicó un factor multiplicativo de 0.8 sobre los valores de los píxeles, equivalente a una reducción del 20 % del brillo. Esta transformación permitió estudiar el efecto de la iluminación sin modificar las etiquetas ni los pesos de los modelos.
+
+### Hipótesis
+
+- **H1:** La reducción del brillo disminuirá el Macro-F1 de los modelos debido a la posible pérdida de visibilidad de los síntomas.
+- **H2:** El efecto de la reducción del brillo será diferente entre las arquitecturas evaluadas.
+
+### Prueba realizada
+
+Se implementó el notebook `07_experimento_robustez.ipynb`, utilizando los cuatro checkpoints obtenidos durante los experimentos principales.
+
+Se evaluaron las 1.874 imágenes originales del conjunto de prueba y una versión oscurecida de estas mismas imágenes.
+
+Se mantuvieron constantes las siguientes condiciones:
+
+- Semilla: 42.
+- Resolución: 224 × 224 píxeles.
+- Tamaño de lote: 8.
+- Factor de brillo: 0.8.
+- Modelos y pesos previamente entrenados.
+- Etiquetas y partición de prueba.
+- Preprocesamiento correspondiente a cada arquitectura.
+- Macro-F1 como métrica principal.
+
+No se realizaron entrenamientos adicionales ni ajustes de hiperparámetros.
+
+### Resultados obtenidos
+
+| Modelo | Accuracy original | Accuracy oscurecida | Macro-F1 original | Macro-F1 oscurecido | Variación Macro-F1 |
+|---|---:|---:|---:|---:|---:|
+| E0 | 0.6772 | 0.6692 | 0.4566 | 0.4468 | -0.0097 |
+| E1 | 0.7620 | 0.7572 | 0.6600 | 0.6509 | -0.0091 |
+| E2 | 0.8122 | 0.8026 | 0.7403 | 0.7245 | -0.0158 |
+| E3 | 0.8068 | 0.8106 | 0.7273 | 0.7276 | +0.0003 |
+
+### Análisis de resultados
+
+E0 presentó una disminución de 0.97 puntos porcentuales en Macro-F1, manteniéndose como el modelo con menor rendimiento predictivo.
+
+E1 presentó una disminución de 0.91 puntos porcentuales, mostrando una sensibilidad moderada ante la perturbación aplicada.
+
+E2 obtuvo la mayor reducción de Macro-F1, equivalente a 1.58 puntos porcentuales. Aunque fue el modelo con mejor rendimiento sobre las imágenes originales, mostró una mayor sensibilidad a la reducción del brillo.
+
+E3 presentó un incremento de 0.03 puntos porcentuales en Macro-F1 y de aproximadamente 0.37 puntos porcentuales en accuracy. Este comportamiento indica que ResNet50 mantuvo una mayor estabilidad ante la perturbación evaluada.
+
+Sin embargo, el incremento observado en E3 es demasiado pequeño para afirmar que reducir el brillo mejora sistemáticamente su rendimiento.
+
+### Análisis por clase
+
+La respuesta de los modelos ante la reducción del brillo no fue uniforme entre las cinco clases.
+
+| Clase | Variación F1 E0 | Variación F1 E1 | Variación F1 E2 | Variación F1 E3 |
+|---|---:|---:|---:|---:|
+| CBB | -0.0332 | -0.0237 | -0.0451 | +0.0041 |
+| CBSD | -0.0128 | +0.0022 | +0.0058 | +0.0185 |
+| CGM | -0.0229 | -0.0182 | -0.0411 | -0.0096 |
+| CMD | -0.0039 | -0.0033 | -0.0092 | -0.0021 |
+| Healthy | +0.0240 | -0.0025 | +0.0108 | -0.0096 |
+
+La clase CGM presentó una disminución del F1 en los cuatro modelos, lo que evidencia una sensibilidad compartida ante la reducción del brillo.
+
+La clase CBB presentó una disminución considerable en E2, pasando de un F1 de 0.5391 a 0.4939. En contraste, E3 mantuvo resultados relativamente estables para esta clase.
+
+Una posible explicación es que la reducción de iluminación dificulta la identificación de determinados patrones visuales, manchas y cambios de color asociados con las enfermedades. No obstante, esta interpretación requiere una inspección visual adicional para ser confirmada.
+
+La clase CBSD presentó un aumento del recall en los cuatro modelos, aunque esto no implicó necesariamente una mejora del F1 en todos los casos.
+
+CMD presentó variaciones relativamente pequeñas en comparación con otras clases, manteniendo un rendimiento elevado.
+
+### Contrastación de hipótesis
+
+**H1: Parcialmente respaldada.**
+
+Los modelos E0, E1 y E2 presentaron una disminución del Macro-F1 después de reducir el brillo. Sin embargo, E3 mantuvo su rendimiento e incluso presentó un incremento mínimo.
+
+Por tanto, la reducción del brillo no produjo una disminución generalizada en todos los modelos.
+
+**H2: Respaldada por los resultados observados.**
+
+Las arquitecturas presentaron diferentes niveles de sensibilidad ante la misma perturbación. E2 experimentó la mayor disminución del Macro-F1, mientras que E3 presentó la mayor estabilidad.
+
+### Verificación de reproducibilidad
+
+Se compararon los resultados obtenidos sobre las imágenes originales con los registrados durante la evaluación final.
+
+| Modelo | Macro-F1 previo | Macro-F1 actual |
+|---|---:|---:|
+| E0 | 0.4566 | 0.456560 |
+| E1 | 0.6600 | 0.659984 |
+| E2 | 0.7403 | 0.740293 |
+| E3 | 0.7273 | 0.727316 |
+
+Los resultados coincidieron al redondearlos a cuatro cifras decimales, lo que respalda la reproducibilidad de las métricas y la consistencia del procedimiento de evaluación.
+
+### Limitaciones
+
+El experimento consideró únicamente un nivel de reducción del brillo. Por tanto, los resultados no permiten generalizar el comportamiento de los modelos ante condiciones extremas de iluminación, sombras, desenfoque, ruido u otras perturbaciones.
+
+Tampoco se realizaron pruebas de significancia estadística que permitan establecer si las diferencias observadas son estadísticamente significativas.
+
+### Revisión y decisión posterior
+
+Se concluyó que E3 presentó la mayor robustez observada frente a la reducción del brillo, mientras que E2 mantuvo el mejor rendimiento sobre las imágenes originales y una mayor eficiencia en términos de tamaño del modelo.
+
+Se decidió conservar los resultados de los cuatro modelos sin realizar modificaciones adicionales, evitando utilizar el conjunto de prueba para ajustar hiperparámetros.
+
+Con este experimento se finalizó la fase experimental del proyecto. Las siguientes actividades estarán orientadas a consolidar las evidencias, completar la documentación y elaborar el informe final.
+
+### Evidencias generadas
+
+- Notebook `07_experimento_robustez.ipynb`.
+- Tabla comparativa de robustez.
+- Métricas por clase.
+- Matrices de confusión.
+- Gráficas comparativas.
+- Predicciones individuales.
+- Ejemplos visuales de la perturbación.
+- Verificación de las métricas originales.
